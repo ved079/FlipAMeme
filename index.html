@@ -788,7 +788,7 @@ const LEVELS = [
   { cols: 6, pairs: 18 },  // Level 8 — 18 pairs (all 19 tiles use 18)
 ];
 
-let currentLevel = 0; // 0-indexed
+let currentLevel = parseInt(localStorage.getItem('mm_level') || '0', 10);
 
 const TILE_DEFS = [
   { id: 't1',  imageUrl: 'media/img/ye kya bak rahe ho.jpg',              soundUrl: 'https://www.myinstants.com/media/sounds/cid-acp-mc.mp3',                                   name: 'CID ACP',              emoji: '🕵️' },
@@ -1366,7 +1366,10 @@ function hideWinModal() {
 function resetGame(advanceLevel = false) {
   if (advanceLevel && currentLevel < LEVELS.length - 1) {
     currentLevel++;
+  } else if (!advanceLevel) {
+    currentLevel = 0;
   }
+  localStorage.setItem('mm_level', currentLevel);
   state.generation += 1;
   stopTimer();
   state.tiles = shuffle(buildDeck());
@@ -1424,8 +1427,8 @@ function clearConfetti() {
 // SECTION 9: INIT / WIRE-UP
 // =====================================================================
 
-document.getElementById('restart-btn').addEventListener('click', () => { fadeOutCurrent(); currentLevel = 0; resetGame(); });
-document.getElementById('play-again-btn').addEventListener('click', () => { fadeOutCurrent(); currentLevel = 0; resetGame(); });
+document.getElementById('restart-btn').addEventListener('click', () => { fadeOutCurrent(); resetGame(); });
+document.getElementById('play-again-btn').addEventListener('click', () => { fadeOutCurrent(); resetGame(); });
 document.getElementById('next-level-btn').addEventListener('click', () => { fadeOutCurrent(); resetGame(true); });
 
 // =====================================================================
