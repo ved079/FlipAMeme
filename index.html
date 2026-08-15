@@ -791,34 +791,34 @@ const LEVELS = [
 let currentLevel = 0; // 0-indexed
 
 const TILE_DEFS = [
-  { id: 't1', imageUrl: 'ye%20kya%20bak%20rahe%20ho.jpg', soundUrl: 'https://www.myinstants.com/media/sounds/cid-acp-mc.mp3',                                name: 'CID ACP',         emoji: '🕵️' },
-  { id: 't2', imageUrl: 'Rizz.jpg',           soundUrl: 'https://www.myinstants.com/media/sounds/rizz-sound-effect.mp3',                             name: 'Rizz',            emoji: '😏' },
-  { id: 't3', videoUrl: 'Baigan.mp4',          soundUrl: 'https://www.myinstants.com/media/sounds/baigan.mp3',                                        name: 'Baigan',          emoji: '🍆' },
-  { id: 't4', imageUrl: 'HindustaniBhau.jpg', soundUrl: 'https://www.myinstants.com/media/sounds/tmp_z5b93np.mp3',                                   name: 'Hindustani Bhau', emoji: '🎙️' },
-  { id: 't5', imageUrl: 'amitabh.jpg',        soundUrl: 'https://www.myinstants.com/media/sounds/ma-ka-bhosda-aag.mp3',                              name: 'MKB AAG',         emoji: '🎤' },
-  { id: 't6', imageUrl: 'Salunke.webp',       soundUrl: 'https://www.myinstants.com/media/sounds/nahi-nahi-saluke-yaha-kuchh-to-gadbad-hai.mp3',    name: 'Salunke',         emoji: '🕵️' },
-  { id: 't7', videoUrl: 'kyu-re-mc-cid-kyu-re-mc.mp4', soundUrl: 'https://www.myinstants.com/media/sounds/kyu-re-madarchod-cid.mp3',               name: 'Kyu Re CID',      emoji: '🎬' },
-  { id: 't8', videoUrl: 'Ek Gand Pe.mp4',     soundUrl: 'https://www.myinstants.com/media/sounds/ek-gand-pe-repta-mara-n-sarak-pe-hagta-firega.mp3', name: 'Ek Gand Pe',     emoji: '🤣' },
-  { id: 't9', videoUrl: 'modi-ji-memes-modi-ji-bkl-meme.mp4', soundUrl: 'https://www.myinstants.com/media/sounds/modi-ji-bkl.mp3', name: 'Modi Ji BKL', emoji: '🎬' },
-  { id: 't10', videoUrl: 'America kya kehta tha.mp4',          soundUrl: 'https://www.myinstants.com/media/sounds/america-kya-kehta-tha.mp3',            name: 'America',             emoji: '🇺🇸' },
-  { id: 't11', videoUrl: 'hatt thari behen ki.mp4',           soundUrl: 'https://www.myinstants.com/media/sounds/hatt-thari-behen-ki.mp3',             name: 'Hatt Thari Behen Ki', emoji: '😤' },
-  { id: 't12', videoUrl: 'Aisa mat karo.mp4',                 soundUrl: 'https://www.myinstants.com/media/sounds/aisa-mat-karo.mp3',                   name: 'Aisa Mat Karo',       emoji: '🙅' },
-  { id: 't13', videoUrl: 'bkchodi mt kar cid.mp4',            soundUrl: 'https://www.myinstants.com/media/sounds/bkchodi-mt-kar-cid.mp3',              name: 'Bkchodi Mt Kar CID',  emoji: '🕵️' },
-  { id: 't14', videoUrl: 'Chalti Firti Cocaine.mp4',          soundUrl: 'https://www.myinstants.com/media/sounds/chalti-firti-cocaine.mp3',            name: 'Chalti Firti Cocaine',emoji: '🤪' },
-  { id: 't15', videoUrl: 'Modi ji wah.mp4',                   soundUrl: 'https://www.myinstants.com/media/sounds/modi-ji-wah.mp3',                     name: 'Modi Ji Wah',         emoji: '🙌' },
-  { id: 't16', videoUrl: 'Cid ke bakchodi.mp4',               soundUrl: 'https://www.myinstants.com/media/sounds/cid-ke-bakchodi.mp3',                 name: 'CID Ke Bakchodi',     emoji: '🕵️' },
-  { id: 't17', imageUrl: 'Teri maa ka bosda fat jaga.jpg',    soundUrl: 'https://www.myinstants.com/media/sounds/teri-maa-ka-bosda-fat-jaga.mp3',      name: 'Teri Maa Ka...',      emoji: '💥' },
-  { id: 't18', videoUrl: 'Meow ghop ghop ghop.mp4',           soundUrl: 'https://www.myinstants.com/media/sounds/meow-ghop-ghop-ghop.mp3',             name: 'Meow Ghop Ghop',      emoji: '🐱' },
-  { id: 't19', videoUrl: '7 crore KBC.mp4',                   soundUrl: 'https://www.myinstants.com/media/sounds/7-crore-kbc.mp3',                     name: '7 Crore KBC',         emoji: '💰' },
-  { id: 't20', videoUrl: 'EK jhaat bhar ka aadmi ....mp4',   soundUrl: 'https://www.myinstants.com/media/sounds/ek-jhaat-bhar-ka-aadmi.mp3',             name: 'Ek Jhaat Bhar',       emoji: '😤' },
-  { id: 't21', videoUrl: 'Acha ji aisa hai kya.mp4',          soundUrl: 'https://www.myinstants.com/media/sounds/acha-ji-aisa-hai-kya.mp3',               name: 'Acha Ji Aisa Hai',    emoji: '🤨' },
-  { id: 't22', videoUrl: 'ROM ROM BHAIYO.mp4',                soundUrl: 'https://www.myinstants.com/media/sounds/rom-rom-bhaiyo.mp3',                     name: 'Rom Rom Bhaiyo',      emoji: '🙏' },
-  { id: 't23', videoUrl: 'sad meow song.mp4',                 soundUrl: 'https://www.myinstants.com/media/sounds/sad-meow-song.mp3',                       name: 'Sad Meow Song',       emoji: '😿' },
-  { id: 't24', imageUrl: 'MODI MODI, MODI MODI (kids).jpg',   soundUrl: 'https://www.myinstants.com/media/sounds/modi-modi-modi-modi-kids.mp3',             name: 'Modi Modi Kids',      emoji: '🙌' },
-  { id: 't25', videoUrl: 'Chodu CID (Pakad le).mp4',          soundUrl: 'https://www.myinstants.com/media/sounds/chodu-cid-pakad-le.mp3',                   name: 'Chodu CID Pakad Le',  emoji: '🕵️' },
-  { id: 't26', videoUrl: 'Kis color chaddi pehne ho.mp4',     soundUrl: 'https://www.myinstants.com/media/sounds/kis-color-chaddi-pehne-ho.mp3',            name: 'Kis Color Chaddi',    emoji: '🩲' },
-  { id: 't27', videoUrl: 'Chalo.mp4',                         soundUrl: 'https://www.myinstants.com/media/sounds/chalo.mp3',                                 name: 'Chalo',               emoji: '🚶' },
-  { id: 't28', imageUrl: 'chodu cid (tum ek).gif',            soundUrl: 'https://www.myinstants.com/media/sounds/chodu-cid-tum-ek.mp3',                     name: 'Chodu CID Tum Ek',    emoji: '🕵️' },
+  { id: 't1',  imageUrl: 'media/img/ye kya bak rahe ho.jpg',              soundUrl: 'https://www.myinstants.com/media/sounds/cid-acp-mc.mp3',                                   name: 'CID ACP',              emoji: '🕵️' },
+  { id: 't2',  imageUrl: 'media/img/Rizz.jpg',                            soundUrl: 'https://www.myinstants.com/media/sounds/rizz-sound-effect.mp3',                            name: 'Rizz',                 emoji: '😏' },
+  { id: 't3',  videoUrl: 'media/vid/Baigan.mp4',                          soundUrl: 'https://www.myinstants.com/media/sounds/baigan.mp3',                                       name: 'Baigan',               emoji: '🍆' },
+  { id: 't4',  imageUrl: 'media/img/HindustaniBhau.jpg',                  soundUrl: 'https://www.myinstants.com/media/sounds/tmp_z5b93np.mp3',                                  name: 'Hindustani Bhau',      emoji: '🎙️' },
+  { id: 't5',  imageUrl: 'media/img/amitabh.jpg',                         soundUrl: 'https://www.myinstants.com/media/sounds/ma-ka-bhosda-aag.mp3',                             name: 'MKB AAG',              emoji: '🎤' },
+  { id: 't6',  imageUrl: 'media/img/Salunke.webp',                        soundUrl: 'https://www.myinstants.com/media/sounds/nahi-nahi-saluke-yaha-kuchh-to-gadbad-hai.mp3',   name: 'Salunke',              emoji: '🕵️' },
+  { id: 't7',  videoUrl: 'media/vid/kyu-re-mc-cid-kyu-re-mc.mp4',        soundUrl: 'https://www.myinstants.com/media/sounds/kyu-re-madarchod-cid.mp3',                         name: 'Kyu Re CID',           emoji: '🎬' },
+  { id: 't8',  videoUrl: 'media/vid/Ek Gand Pe.mp4',                     soundUrl: 'https://www.myinstants.com/media/sounds/ek-gand-pe-repta-mara-n-sarak-pe-hagta-firega.mp3',name: 'Ek Gand Pe',           emoji: '🤣' },
+  { id: 't9',  videoUrl: 'media/vid/modi-ji-memes-modi-ji-bkl-meme.mp4', soundUrl: 'https://www.myinstants.com/media/sounds/modi-ji-bkl.mp3',                                  name: 'Modi Ji BKL',          emoji: '🎬' },
+  { id: 't10', videoUrl: 'media/vid/America kya kehta tha.mp4',           soundUrl: 'https://www.myinstants.com/media/sounds/america-kya-kehta-tha.mp3',                        name: 'America',              emoji: '🇺🇸' },
+  { id: 't11', videoUrl: 'media/vid/hatt thari behen ki.mp4',             soundUrl: 'https://www.myinstants.com/media/sounds/hatt-thari-behen-ki.mp3',                          name: 'Hatt Thari Behen Ki',  emoji: '😤' },
+  { id: 't12', videoUrl: 'media/vid/Aisa mat karo.mp4',                   soundUrl: 'https://www.myinstants.com/media/sounds/aisa-mat-karo.mp3',                                name: 'Aisa Mat Karo',        emoji: '🙅' },
+  { id: 't13', videoUrl: 'media/vid/bkchodi mt kar cid.mp4',              soundUrl: 'https://www.myinstants.com/media/sounds/bkchodi-mt-kar-cid.mp3',                           name: 'Bkchodi Mt Kar CID',   emoji: '🕵️' },
+  { id: 't14', videoUrl: 'media/vid/Chalti Firti Cocaine.mp4',            soundUrl: 'https://www.myinstants.com/media/sounds/chalti-firti-cocaine.mp3',                         name: 'Chalti Firti Cocaine', emoji: '🤪' },
+  { id: 't15', videoUrl: 'media/vid/Modi ji wah.mp4',                     soundUrl: 'https://www.myinstants.com/media/sounds/modi-ji-wah.mp3',                                  name: 'Modi Ji Wah',          emoji: '🙌' },
+  { id: 't16', videoUrl: 'media/vid/Cid ke bakchodi.mp4',                 soundUrl: 'https://www.myinstants.com/media/sounds/cid-ke-bakchodi.mp3',                              name: 'CID Ke Bakchodi',      emoji: '🕵️' },
+  { id: 't17', imageUrl: 'media/img/Teri maa ka bosda fat jaga.jpg',      soundUrl: 'https://www.myinstants.com/media/sounds/teri-maa-ka-bosda-fat-jaga.mp3',                   name: 'Teri Maa Ka...',       emoji: '💥' },
+  { id: 't18', videoUrl: 'media/vid/Meow ghop ghop ghop.mp4',             soundUrl: 'https://www.myinstants.com/media/sounds/meow-ghop-ghop-ghop.mp3',                          name: 'Meow Ghop Ghop',       emoji: '🐱' },
+  { id: 't19', videoUrl: 'media/vid/7 crore KBC.mp4',                     soundUrl: 'https://www.myinstants.com/media/sounds/7-crore-kbc.mp3',                                  name: '7 Crore KBC',          emoji: '💰' },
+  { id: 't20', videoUrl: 'media/vid/EK jhaat bhar ka aadmi ....mp4',      soundUrl: 'https://www.myinstants.com/media/sounds/ek-jhaat-bhar-ka-aadmi.mp3',                       name: 'Ek Jhaat Bhar',        emoji: '😤' },
+  { id: 't21', videoUrl: 'media/vid/Acha ji aisa hai kya.mp4',            soundUrl: 'https://www.myinstants.com/media/sounds/acha-ji-aisa-hai-kya.mp3',                         name: 'Acha Ji Aisa Hai',     emoji: '🤨' },
+  { id: 't22', videoUrl: 'media/vid/ROM ROM BHAIYO.mp4',                  soundUrl: 'https://www.myinstants.com/media/sounds/rom-rom-bhaiyo.mp3',                               name: 'Rom Rom Bhaiyo',       emoji: '🙏' },
+  { id: 't23', videoUrl: 'media/vid/sad meow song.mp4',                   soundUrl: 'https://www.myinstants.com/media/sounds/sad-meow-song.mp3',                                name: 'Sad Meow Song',        emoji: '😿' },
+  { id: 't24', imageUrl: 'media/img/MODI MODI, MODI MODI (kids).jpg',     soundUrl: 'https://www.myinstants.com/media/sounds/modi-modi-modi-modi-kids.mp3',                     name: 'Modi Modi Kids',       emoji: '🙌' },
+  { id: 't25', videoUrl: 'media/vid/Chodu CID (Pakad le).mp4',            soundUrl: 'https://www.myinstants.com/media/sounds/chodu-cid-pakad-le.mp3',                           name: 'Chodu CID Pakad Le',   emoji: '🕵️' },
+  { id: 't26', videoUrl: 'media/vid/Kis color chaddi pehne ho.mp4',       soundUrl: 'https://www.myinstants.com/media/sounds/kis-color-chaddi-pehne-ho.mp3',                    name: 'Kis Color Chaddi',     emoji: '🩲' },
+  { id: 't27', videoUrl: 'media/vid/Chalo.mp4',                           soundUrl: 'https://www.myinstants.com/media/sounds/chalo.mp3',                                        name: 'Chalo',                emoji: '🚶' },
+  { id: 't28', imageUrl: 'media/img/chodu cid (tum ek).gif',              soundUrl: 'https://www.myinstants.com/media/sounds/chodu-cid-tum-ek.mp3',                             name: 'Chodu CID Tum Ek',     emoji: '🕵️' },
 ];
 
 // Returns a random sample of tile defs sized to the current level's pair count.
@@ -1081,7 +1081,7 @@ function renderBoard() {
     // Determine visual: video > image > emoji
     let frontContent;
     if (tile.def.videoUrl) {
-      frontContent = `<video src="${encodeURIComponent(tile.def.videoUrl)}" class="tile-image" autoplay loop muted playsinline></video>`;
+      frontContent = `<video src="${tile.def.videoUrl.split('/').map(encodeURIComponent).join('/')}" class="tile-image" autoplay loop muted playsinline></video>`;
     } else if (tile.def.imageUrl) {
       frontContent = `<img src="${tile.def.imageUrl}" class="tile-image" alt="${tile.def.name}">`;
     } else {
