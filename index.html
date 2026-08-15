@@ -969,10 +969,7 @@ function playMatchSound(tile) {
 }
 
 const MISMATCH_SOUNDS = [
-  'https://www.myinstants.com/media/sounds/faaah.mp3',
-  'https://www.myinstants.com/media/sounds/ack.mp3',
   'https://www.myinstants.com/media/sounds/mac-quack.mp3',
-  'https://www.myinstants.com/media/sounds/spongebob-fail.mp3',
 ];
 
 function playMismatchSound() {
@@ -988,9 +985,7 @@ function playMismatchSound() {
 }
 
 const WIN_SOUNDS = [
-  'https://www.myinstants.com/media/sounds/kids-saying-yay-sound-effect_xryiS4g.mp3',
   'https://www.myinstants.com/media/sounds/wow_2.mp3',
-  'https://www.myinstants.com/media/sounds/let-her-go.mp3',
 ];
 
 function playWinSound() {
@@ -1200,7 +1195,6 @@ function handleTileClick(tile) {
       state.isWon = true;
       stopTimer();
       launchConfetti();
-      setTimeout(playWinSound, 1200);
     }
   } else {
     // ── MISMATCH ───────────────────────────────────────────────────
@@ -1347,6 +1341,8 @@ function checkWin() {
 }
 
 function showWinModal() {
+  playWinSound();
+  setTimeout(() => modalEl.classList.add('show'), 200);
   const isLastLevel = currentLevel >= LEVELS.length - 1;
   const trophyEl = document.getElementById('modal-trophy');
   if (isLastLevel) {
@@ -1361,7 +1357,6 @@ function showWinModal() {
   document.getElementById('final-moves').textContent = state.moves;
   document.getElementById('final-time').textContent = formatTime(state.elapsedMs);
   document.getElementById('next-level-btn').style.display = isLastLevel ? 'none' : '';
-  modalEl.classList.add('show');
 }
 
 function hideWinModal() {
