@@ -977,27 +977,19 @@ function playMismatchSound() {
   }
 }
 
+const WIN_SOUNDS = [
+  'https://www.myinstants.com/media/sounds/kids-saying-yay-sound-effect_xryiS4g.mp3',
+  'https://www.myinstants.com/media/sounds/wow_2.mp3',
+  'https://www.myinstants.com/media/sounds/let-her-go.mp3',
+];
+
 function playWinSound() {
-  try {
-    const ctx = getAudioCtx();
-    if (ctx.state === 'suspended') ctx.resume();
-    const now = ctx.currentTime;
-    const notes = [523.25, 659.25, 783.99, 1046.50];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.value = freq;
-      const start = now + i * 0.1;
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + 0.6);
-    });
-  } catch (e) { /* silent */ }
+  fadeOutCurrent();
+  const url = WIN_SOUNDS[Math.floor(Math.random() * WIN_SOUNDS.length)];
+  const audio = new Audio(url);
+  audio.volume = 1;
+  currentAudio = audio;
+  audio.play().catch(() => {});
 }
 
 // =====================================================================
@@ -1428,9 +1420,9 @@ function clearConfetti() {
 // SECTION 9: INIT / WIRE-UP
 // =====================================================================
 
-document.getElementById('restart-btn').addEventListener('click', () => { currentLevel = 0; resetGame(); });
-document.getElementById('play-again-btn').addEventListener('click', () => { currentLevel = 0; resetGame(); });
-document.getElementById('next-level-btn').addEventListener('click', () => resetGame(true));
+document.getElementById('restart-btn').addEventListener('click', () => { fadeOutCurrent(); currentLevel = 0; resetGame(); });
+document.getElementById('play-again-btn').addEventListener('click', () => { fadeOutCurrent(); currentLevel = 0; resetGame(); });
+document.getElementById('next-level-btn').addEventListener('click', () => { fadeOutCurrent(); resetGame(true); });
 
 // =====================================================================
 // SECTION 10: PEEK PREVIEW
