@@ -814,12 +814,12 @@ const LEVELS = [
 let currentLevel = parseInt(localStorage.getItem('mm_level') || '0', 10);
 
 const TILE_DEFS = [
-  { id: 't1',  imageUrl: 'media/img/ye kya bak rahe ho.jpg',              soundUrl: 'https://www.myinstants.com/media/sounds/cid-acp-mc.mp3',                                   name: 'CID ACP',              emoji: '🕵️' },
-  { id: 't2',  imageUrl: 'media/img/Rizz.jpg',                            soundUrl: 'https://www.myinstants.com/media/sounds/rizz-sound-effect.mp3',                            name: 'Rizz',                 emoji: '😏' },
+  { id: 't1',  videoUrl: 'media/vid/CID ACP.mp4',                         soundUrl: 'https://www.myinstants.com/media/sounds/cid-acp-mc.mp3',                                   name: 'CID ACP',              emoji: '🕵️' },
+  { id: 't2',  videoUrl: 'media/vid/Rizz.mp4',                            soundUrl: 'https://www.myinstants.com/media/sounds/rizz-sound-effect.mp3',                            name: 'Rizz',                 emoji: '😏' },
   { id: 't3',  videoUrl: 'media/vid/Baigan.mp4',                          soundUrl: 'https://www.myinstants.com/media/sounds/baigan.mp3',                                       name: 'Baigan',               emoji: '🍆' },
-  { id: 't4',  imageUrl: 'media/img/HindustaniBhau.jpg',                  soundUrl: 'https://www.myinstants.com/media/sounds/tmp_z5b93np.mp3',                                  name: 'Hindustani Bhau',      emoji: '🎙️' },
-  { id: 't5',  imageUrl: 'media/img/amitabh.jpg',                         soundUrl: 'https://www.myinstants.com/media/sounds/ma-ka-bhosda-aag.mp3',                             name: 'MKB AAG',              emoji: '🎤' },
-  { id: 't6',  imageUrl: 'media/img/Salunke.webp',                        soundUrl: 'https://www.myinstants.com/media/sounds/nahi-nahi-saluke-yaha-kuchh-to-gadbad-hai.mp3',   name: 'Salunke',              emoji: '🕵️' },
+  { id: 't4',  videoUrl: 'media/vid/Hindustani Bhau.mp4',                  soundUrl: 'https://www.myinstants.com/media/sounds/tmp_z5b93np.mp3',                                  name: 'Hindustani Bhau',      emoji: '🎙️' },
+  { id: 't5',  videoUrl: 'media/vid/MKB AAG.mp4',                         soundUrl: 'https://www.myinstants.com/media/sounds/ma-ka-bhosda-aag.mp3',                             name: 'MKB AAG',              emoji: '🎤' },
+  { id: 't6',  videoUrl: 'media/vid/Salunke.mp4',                         soundUrl: 'https://www.myinstants.com/media/sounds/nahi-nahi-saluke-yaha-kuchh-to-gadbad-hai.mp3',   name: 'Salunke',              emoji: '🕵️' },
   { id: 't7',  videoUrl: 'media/vid/kyu-re-mc-cid-kyu-re-mc.mp4',        soundUrl: 'https://www.myinstants.com/media/sounds/kyu-re-madarchod-cid.mp3',                         name: 'Kyu Re CID',           emoji: '🎬' },
   { id: 't8',  videoUrl: 'media/vid/Ek Gand Pe.mp4',                     soundUrl: 'https://www.myinstants.com/media/sounds/ek-gand-pe-repta-mara-n-sarak-pe-hagta-firega.mp3',name: 'Ek Gand Pe',           emoji: '🤣' },
   { id: 't9',  videoUrl: 'media/vid/modi-ji-memes-modi-ji-bkl-meme.mp4', soundUrl: 'https://www.myinstants.com/media/sounds/modi-ji-bkl.mp3',                                  name: 'Modi Ji BKL',          emoji: '🎬' },
@@ -842,6 +842,7 @@ const TILE_DEFS = [
   { id: 't26', videoUrl: 'media/vid/Kis color chaddi pehne ho.mp4',       soundUrl: 'https://www.myinstants.com/media/sounds/kis-color-chaddi-pehne-ho.mp3',                    name: 'Kis Color Chaddi',     emoji: '🩲' },
   { id: 't27', videoUrl: 'media/vid/Chalo.mp4',                           soundUrl: 'https://www.myinstants.com/media/sounds/chalo.mp3',                                        name: 'Chalo',                emoji: '🚶' },
   { id: 't28', imageUrl: 'media/img/chodu cid (tum ek).gif',              soundUrl: 'https://www.myinstants.com/media/sounds/chodu-cid-tum-ek.mp3',                             name: 'Chodu CID Tum Ek',     emoji: '🕵️' },
+  { id: 't29', videoUrl: 'media/vid/jethalal happy diwali.mp4',           soundUrl: 'media/sounds/happy-diwali.mp3',                                                          name: 'Jethalal Happy Diwali',emoji: '🪔' },
 ];
 
 // Returns a random sample of tile defs sized to the current level's pair count.
