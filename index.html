@@ -833,6 +833,38 @@ function getActiveDefs() {
 }
 
 // =====================================================================
+// SECTION 1c: MID-LEVEL PROGRESS PERSISTENCE
+// =====================================================================
+
+function saveProgress() {
+  if (state.isWon) return;
+  const data = {
+    level: currentLevel,
+    tileOrder: state.tiles.map(t => t.def.id),
+    matchedIndices: state.tiles.reduce((acc, t, i) => { if (t.matched) acc.push(i); return acc; }, []),
+    moves: state.moves,
+    elapsedMs: state.elapsedMs,
+  };
+  localStorage.setItem('mm_progress', JSON.stringify(data));
+}
+
+function clearProgress() {
+  localStorage.removeItem('mm_progress');
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem('mm_progress');
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.level !== currentLevel) return null;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+// =====================================================================
 // SECTION 1b: AUDIO DURATION CACHE
 // Pre-fetch clip durations so animation can be timed to audio length.
 // =====================================================================
@@ -845,7 +877,7 @@ const ANIM_DEFAULT = 2000;  // ms — fallback when duration can't be determined
 const audioDurationCache = {};
 
 function preloadAudioDurations() {
-  getActiveDefs().forEach(def => {
+  (state.activeDefs.length ? state.activeDefs : getActiveDefs()).forEach(def => {
     if (!def.soundUrl || def.soundUrl in audioDurationCache) return;
     audioDurationCache[def.soundUrl] = null; // mark pending
     const a = new Audio(def.soundUrl);
@@ -879,11 +911,12 @@ function getAnimDuration(tile) {
 
 const state = {
   tiles: [],
+  activeDefs: [],
   firstTile: null,
   secondTile: null,
   moves: 0,
   matchedPairs: 0,
-  totalPairs: getActiveDefs().length,
+  totalPairs: 0,
   startTime: null,
   timerInterval: null,
   elapsedMs: 0,
@@ -1007,15 +1040,27 @@ const timerEl = document.getElementById('timer');
 const progressFillEl = document.getElementById('progress-fill');
 const modalEl = document.getElementById('modal');
 
-function buildDeck() {
-  const defs = getActiveDefs();
+function buildDeck(restoredOrder) {
+  if (!state.activeDefs || state.activeDefs.length === 0) {
+    state.activeDefs = getActiveDefs();
+  }
+  const defs = state.activeDefs;
+  if (restoredOrder) {
+    const defMap = Object.fromEntries(defs.flatMap(d => [[d.id, d]]));
+    return restoredOrder.map((id, idx) => ({
+      uuid: `tile-${idx}-${Math.random().toString(36).slice(2, 8)}`,
+      def: defMap[id],
+      flipped: false,
+      matched: false,
+    })).filter(t => t.def);
+  }
   const pairs = [...defs, ...defs];
-  return pairs.map((def, idx) => ({
+  return shuffle(pairs.map((def, idx) => ({
     uuid: `tile-${idx}-${Math.random().toString(36).slice(2, 8)}`,
     def,
     flipped: false,
     matched: false,
-  }));
+  })));
 }
 
 function shuffle(arr) {
@@ -1188,14 +1233,17 @@ function handleTileClick(tile) {
     // 4. Check win before animation so we can pass callback
     const isFinalPair = state.matchedPairs === state.totalPairs;
 
-    // 5. Trigger fly-out animation; on final pair, show modal when animation ends
-    triggerMatchMerge(t1, t2, gen, isFinalPair ? showWinModal : null);
-
     if (isFinalPair) {
+      clearProgress();
       state.isWon = true;
       stopTimer();
       launchConfetti();
+    } else {
+      saveProgress();
     }
+
+    // 5. Trigger fly-out animation; on final pair, show modal when animation ends
+    triggerMatchMerge(t1, t2, gen, isFinalPair ? showWinModal : null);
   } else {
     // ── MISMATCH ───────────────────────────────────────────────────
     playMismatchSound();
@@ -1363,27 +1411,51 @@ function hideWinModal() {
   modalEl.classList.remove('show');
 }
 
-function resetGame(advanceLevel = false) {
+function resetGame(advanceLevel = false, savedProgress = null) {
   if (advanceLevel && currentLevel < LEVELS.length - 1) {
     currentLevel++;
-  } else if (!advanceLevel) {
-    currentLevel = 0;
   }
   localStorage.setItem('mm_level', currentLevel);
   state.generation += 1;
   stopTimer();
-  state.tiles = shuffle(buildDeck());
   state.firstTile = null;
   state.secondTile = null;
-  state.moves = 0;
-  state.matchedPairs = 0;
-  state.totalPairs = getActiveDefs().length;
-  state.elapsedMs = 0;
-  state.startTime = null;
   state.isLocked = false;
   state.isWon = false;
   state.peeksLeft = MAX_PEEKS;
   boardEl.classList.remove('locked');
+
+  if (savedProgress) {
+    // Restore saved mid-level state
+    const defById = Object.fromEntries(TILE_DEFS.map(d => [d.id, d]));
+    state.activeDefs = [...new Map(savedProgress.tileOrder.map(id => [id, defById[id]])).values()].filter(Boolean);
+    state.tiles = buildDeck(savedProgress.tileOrder);
+    state.moves = savedProgress.moves;
+    state.elapsedMs = savedProgress.elapsedMs;
+    state.startTime = null;
+    state.matchedPairs = 0;
+    const matchedSet = new Set(savedProgress.matchedIndices);
+    state.tiles.forEach((t, i) => {
+      if (matchedSet.has(i)) {
+        t.matched = true;
+        t.flipped = true;
+        state.matchedPairs += 0.5;
+      }
+    });
+    state.matchedPairs = Math.round(state.matchedPairs);
+    state.totalPairs = state.activeDefs.length;
+  } else {
+    // Fresh start
+    clearProgress();
+    state.activeDefs = getActiveDefs();
+    state.tiles = buildDeck();
+    state.moves = 0;
+    state.matchedPairs = 0;
+    state.totalPairs = state.activeDefs.length;
+    state.elapsedMs = 0;
+    state.startTime = null;
+  }
+
   renderBoard();
   updateHUD();
   updatePeekBtn();
@@ -1391,7 +1463,44 @@ function resetGame(advanceLevel = false) {
   clearConfetti();
   document.querySelectorAll('.merge-clone').forEach(c => c.remove());
   preloadAudioDurations();
-  setTimeout(peekAllTiles, 300);
+
+  if (savedProgress) {
+    if (state.elapsedMs > 0) startTimer();
+    if (state.matchedPairs > 0) {
+      // Hide matched tile elements immediately (no face reveal), then animate them out
+      state.tiles.forEach(t => {
+        if (t.matched) {
+          const el = boardEl.querySelector(`[data-uuid="${t.uuid}"]`);
+          if (el) el.style.visibility = 'hidden';
+        }
+      });
+      // Group matched tiles by def id to get pairs, then animate each pair flying out
+      const byId = {};
+      state.tiles.forEach(t => {
+        if (t.matched) (byId[t.def.id] = byId[t.def.id] || []).push(t);
+      });
+      const pairs = Object.values(byId);
+      const gen = state.generation;
+      const PAIR_STAGGER = 200;
+      pairs.forEach((pair, i) => {
+        setTimeout(() => {
+          if (gen !== state.generation) return;
+          triggerMatchMerge(pair[0], pair[1], gen, null);
+        }, i * PAIR_STAGGER);
+      });
+      // No peek after restore — user resumes blind, no free hints
+      const totalFlyTime = pairs.length * PAIR_STAGGER + 800;
+      setTimeout(() => {
+        if (gen !== state.generation) return;
+        state.isLocked = false;
+        boardEl.classList.remove('locked');
+      }, totalFlyTime);
+    } else {
+      setTimeout(peekAllTiles, 300);
+    }
+  } else {
+    setTimeout(peekAllTiles, 300);
+  }
 }
 
 // =====================================================================
@@ -1427,9 +1536,9 @@ function clearConfetti() {
 // SECTION 9: INIT / WIRE-UP
 // =====================================================================
 
-document.getElementById('restart-btn').addEventListener('click', () => { fadeOutCurrent(); resetGame(); });
-document.getElementById('play-again-btn').addEventListener('click', () => { fadeOutCurrent(); resetGame(); });
-document.getElementById('next-level-btn').addEventListener('click', () => { fadeOutCurrent(); resetGame(true); });
+document.getElementById('restart-btn').addEventListener('click', () => { fadeOutCurrent(); clearProgress(); currentLevel = 0; resetGame(); });
+document.getElementById('play-again-btn').addEventListener('click', () => { fadeOutCurrent(); clearProgress(); currentLevel = 0; resetGame(); });
+document.getElementById('next-level-btn').addEventListener('click', () => { fadeOutCurrent(); clearProgress(); resetGame(true); });
 
 // =====================================================================
 // SECTION 10: PEEK PREVIEW
@@ -1509,6 +1618,30 @@ function peekAllTiles() {
   }, totalRevealTime);
 }
 
+function peekUnmatchedTiles() {
+  // Like peekAllTiles but only flips tiles that aren't already matched
+  const { revealMs, staggerMs } = { revealMs: 600, staggerMs: 20 };
+  state.isLocked = true;
+  boardEl.classList.add('locked');
+
+  const tileEls = [...boardEl.querySelectorAll('.tile:not(.matched)')];
+  tileEls.forEach((el, i) => {
+    setTimeout(() => el.classList.add('flipped'), i * staggerMs);
+  });
+
+  const totalRevealTime = tileEls.length * staggerMs + revealMs;
+  setTimeout(() => {
+    tileEls.forEach((el, i) => {
+      setTimeout(() => el.classList.remove('flipped'), i * staggerMs);
+    });
+    setTimeout(() => {
+      state.isLocked = false;
+      boardEl.classList.remove('locked');
+      updatePeekBtn();
+    }, tileEls.length * staggerMs + 500);
+  }, totalRevealTime);
+}
+
 // Pre-fetch audio durations so animation timing is ready before first match
 preloadAudioDurations();
 
@@ -1525,8 +1658,8 @@ if (window.ResizeObserver) {
   new ResizeObserver(() => fitBoard()).observe(topbarEl);
 }
 
-// Boot the game
-resetGame();
+// Boot the game — restore mid-level progress if available
+resetGame(false, loadProgress());
 </script>
 </body>
 </html>
