@@ -329,7 +329,7 @@ body::before {
   perspective: 1000px;
   cursor: pointer;
   position: relative;
-  animation: tileEnter 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation: tileEnter 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 @keyframes tileEnter {
   from { opacity: 0; transform: translateY(16px) scale(0.88); }
@@ -1074,7 +1074,7 @@ function renderBoard() {
     el.setAttribute('role', 'button');
     el.setAttribute('tabindex', '0');
     el.setAttribute('aria-label', 'Mystery tile. Click to flip.');
-    el.style.animationDelay = (idx * 0.03) + 's';
+    el.style.animationDelay = (idx * 0.06) + 's';
 
     // Determine visual: video > image > emoji
     let frontContent;
@@ -1488,7 +1488,7 @@ function peekUnmatchedTiles({ revealMs, staggerMs }) {
 
 function peekAllTiles() {
   // Initial game-start peek — uses fixed timing, does NOT consume a peek use
-  const { revealMs, staggerMs } = { revealMs: 250, staggerMs: 20 };
+  const { revealMs, staggerMs } = { revealMs: 600, staggerMs: 20 };
   state.isLocked = true;
   boardEl.classList.add('locked');
 
