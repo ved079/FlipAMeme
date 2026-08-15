@@ -45,7 +45,7 @@
   --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.8);
 }
 
-html, body { height: 100%; overflow: hidden; }
+html, body { height: 100%; overflow: hidden; margin: 0; }
 
 body {
   font-family: 'Manrope', system-ui, sans-serif;
@@ -96,7 +96,7 @@ body::before {
 .app {
   position: relative;
   z-index: 1;
-  height: 100%;
+  /* height set by JS for cross-browser mobile accuracy */
   display: flex;
   flex-direction: column;
   padding: 12px 16px 12px;
@@ -1026,19 +1026,33 @@ function shuffle(arr) {
 }
 
 const boardWrap = document.querySelector('.board-wrap');
+const appEl = document.querySelector('.app');
+const topbarEl = document.querySelector('.topbar');
+
+function getViewportHeight() {
+  // visualViewport is the most accurate on mobile (accounts for browser chrome, keyboard, etc.)
+  if (window.visualViewport) return window.visualViewport.height;
+  return window.innerHeight;
+}
+
+function setAppHeight() {
+  appEl.style.height = getViewportHeight() + 'px';
+}
 
 function fitBoard() {
   if (!state || !state.totalPairs) return;
+  setAppHeight();
   const cols = LEVELS[currentLevel].cols;
   const rows = Math.ceil((state.totalPairs * 2) / cols);
   const gap = 8;
-  // clientWidth/clientHeight are accurate after ResizeObserver fires
-  const wrapW = boardWrap.clientWidth;
-  const wrapH = boardWrap.clientHeight;
-  if (!wrapW || !wrapH) return;
+  const appPad = 24;  // top + bottom padding of .app
+  const appGap = 10;  // gap between topbar and board-wrap
+  const availH = getViewportHeight() - topbarEl.offsetHeight - appPad - appGap;
+  const availW = boardWrap.clientWidth;
+  if (!availW || !availH) return;
   const tileSize = Math.floor(Math.min(
-    (wrapW - gap * (cols - 1)) / cols,
-    (wrapH - gap * (rows - 1)) / rows
+    (availW - gap * (cols - 1)) / cols,
+    (availH - gap * (rows - 1)) / rows
   ));
   boardEl.style.gridTemplateColumns = `repeat(${cols}, ${tileSize}px)`;
   boardEl.style.gap = gap + 'px';
@@ -1493,15 +1507,18 @@ function peekAllTiles() {
 // Pre-fetch audio durations so animation timing is ready before first match
 preloadAudioDurations();
 
-// ResizeObserver fires after actual layout — reliable on Chrome, Safari, Brave
-if (window.ResizeObserver) {
-  new ResizeObserver(fitBoard).observe(boardWrap);
-}
-// visualViewport fires when mobile browser chrome shows/hides
+// Set initial height immediately
+setAppHeight();
+
+// All three events needed for full browser coverage
+window.addEventListener('resize', fitBoard);
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', fitBoard);
+  window.visualViewport.addEventListener('scroll', fitBoard);
 }
-window.addEventListener('resize', fitBoard);
+if (window.ResizeObserver) {
+  new ResizeObserver(() => fitBoard()).observe(topbarEl);
+}
 
 // Boot the game
 resetGame();
