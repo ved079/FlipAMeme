@@ -45,7 +45,7 @@
   --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.8);
 }
 
-html, body { height: 100%; }
+html, body { height: 100%; overflow: hidden; }
 
 body {
   font-family: 'Manrope', system-ui, sans-serif;
@@ -96,8 +96,7 @@ body::before {
 .app {
   position: relative;
   z-index: 1;
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   padding: 12px 16px 12px;
@@ -1026,19 +1025,21 @@ function shuffle(arr) {
   return a;
 }
 
+const boardWrap = document.querySelector('.board-wrap');
+
 function fitBoard() {
+  if (!state || !state.totalPairs) return;
   const cols = LEVELS[currentLevel].cols;
   const rows = Math.ceil((state.totalPairs * 2) / cols);
   const gap = 8;
-  const wrap = document.querySelector('.board-wrap');
-  const topbar = document.querySelector('.topbar');
-  // Use window.innerHeight — reliable on mobile Safari unlike dvh
-  const appPad = 24 + 8; // top+bottom padding + gap
-  const wrapH = window.innerHeight - topbar.offsetHeight - appPad;
-  const wrapW = wrap.clientWidth;
-  const availW = wrapW - gap * (cols - 1);
-  const availH = wrapH - gap * (rows - 1);
-  const tileSize = Math.floor(Math.min(availW / cols, availH / rows));
+  // clientWidth/clientHeight are accurate after ResizeObserver fires
+  const wrapW = boardWrap.clientWidth;
+  const wrapH = boardWrap.clientHeight;
+  if (!wrapW || !wrapH) return;
+  const tileSize = Math.floor(Math.min(
+    (wrapW - gap * (cols - 1)) / cols,
+    (wrapH - gap * (rows - 1)) / rows
+  ));
   boardEl.style.gridTemplateColumns = `repeat(${cols}, ${tileSize}px)`;
   boardEl.style.gap = gap + 'px';
 }
@@ -1087,7 +1088,8 @@ function renderBoard() {
 
     boardEl.appendChild(el);
   });
-  requestAnimationFrame(fitBoard);
+  // Double rAF ensures layout is flushed before measuring on browsers without ResizeObserver
+  requestAnimationFrame(() => requestAnimationFrame(fitBoard));
 }
 
 function updateTileEl(tile) {
@@ -1491,6 +1493,14 @@ function peekAllTiles() {
 // Pre-fetch audio durations so animation timing is ready before first match
 preloadAudioDurations();
 
+// ResizeObserver fires after actual layout — reliable on Chrome, Safari, Brave
+if (window.ResizeObserver) {
+  new ResizeObserver(fitBoard).observe(boardWrap);
+}
+// visualViewport fires when mobile browser chrome shows/hides
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fitBoard);
+}
 window.addEventListener('resize', fitBoard);
 
 // Boot the game
