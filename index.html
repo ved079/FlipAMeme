@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meme Match — Memory Tile Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===========================
+   SECTION: Reset & Base
+   =========================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* — Disciplined palette — */
+  --brand:       #E8342A;   /* primary red */
+  --brand-dark:  #B02820;   /* pressed/shadow red */
+  --gold:        #FFB300;   /* Bollywood gold */
+  --gold-dim:    #8A6000;   /* deep gold for shadows */
+
+  /* — Surfaces — */
+  --bg:          #0A0A0A;
+  --surface-1:   #141414;
+  --surface-2:   #1C1C1C;
+  --surface-3:   #262626;
+
+  /* — Text — */
+  --text:        #F0EDE8;
+  --text-muted:  rgba(240, 237, 232, 0.50);
+  --text-dim:    rgba(240, 237, 232, 0.22);
+
+  /* — Borders — */
+  --border:      rgba(255, 255, 255, 0.08);
+  --border-mid:  rgba(255, 255, 255, 0.14);
+
+  /* — Legacy refs used in animations / tile colors — */
+  --accent-2:    var(--gold);
+  --shadow-card: 0 4px 0 rgba(0, 0, 0, 0.6);
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 0% 0%,   rgba(232, 52, 42, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 45% at 100% 100%, rgba(255, 179, 0, 0.09) 0%, transparent 65%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Diagonal halftone texture — intentional, not generic dots */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -55deg,
+    transparent 0px,
+    transparent 18px,
+    rgba(255, 255, 255, 0.018) 18px,
+    rgba(255, 255, 255, 0.018) 19px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient glows — one warm, one gold. Not the rainbow blob default. */
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  z-index: 0;
+  pointer-events: none;
+  animation: float 22s ease-in-out infinite;
+}
+.blob-1 { width: 480px; height: 480px; background: var(--brand);  opacity: 0.08; top: -160px; left: -160px; }
+.blob-2 { width: 560px; height: 560px; background: var(--gold);   opacity: 0.06; bottom: -200px; right: -200px; animation-delay: -8s; }
+.blob-3 { display: none; }
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  40%       { transform: translate(30px, -20px); }
+  70%       { transform: translate(-20px, 30px); }
+}
+
+/* ===========================
+   SECTION: Layout
+   =========================== */
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 36px;
+  max-width: 1100px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+/* ===========================
+   SECTION: Top Bar
+   =========================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: 6px;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.6);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+/* SVG logomark — two tilted flip-cards */
+.brand-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-text h1 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  color: var(--text);
+}
+.brand-text h1 span {
+  color: var(--brand);
+}
+.brand-text p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 14px 9px;
+  min-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+.stat-value {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.stat-value.pink { color: var(--brand); }
+.stat-value.mint { color: var(--gold); }
+.stat-value.cyan { color: var(--gold); }
+
+.progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+}
+.progress-fill {
+  height: 100%;
+  background: var(--brand);
+  width: 0%;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===========================
+   SECTION: Buttons
+   =========================== */
+.btn {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 5px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: white;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn svg { flex-shrink: 0; }
+
+.btn-primary {
+  background: var(--brand);
+  box-shadow: 0 4px 0 var(--brand-dark);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--brand-dark);
+}
+.btn-primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 0px 0 var(--brand-dark);
+}
+
+.btn-lg {
+  font-size: 15px;
+  padding: 12px 24px;
+  border-radius: 6px;
+}
+
+.btn-peek {
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--gold);
+  box-shadow: none;
+  transition: all 0.12s ease;
+}
+.btn-peek:hover:not(:disabled) {
+  background: rgba(255, 179, 0, 0.10);
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+.btn-peek:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn-peek:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* ===========================
+   SECTION: Game Board
+   =========================== */
+.board-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ===========================
+   SECTION: Tile (3D Flip)
+   =========================== */
+.tile {
+  aspect-ratio: 1;
+  perspective: 1000px;
+  cursor: pointer;
+  position: relative;
+  animation: tileEnter 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+@keyframes tileEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.88); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.tile-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tile.flipped .tile-inner,
+.tile.matched .tile-inner {
+  transform: rotateY(180deg);
+}
+
+.tile-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Back of card — brand identity, not stock gradient */
+.tile-back {
+  background: var(--surface-2);
+  border: 1px solid var(--border-mid);
+  border-top: 2px solid var(--brand);
+  box-shadow: var(--shadow-card);
+}
+.tile-back::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(232, 52, 42, 0.25);
+  border-radius: 3px;
+}
+.tile-back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 35% 30%, rgba(255,179,0,0.07), transparent 55%);
+}
+.tile-back-icon {
+  font-family: 'Fredoka', sans-serif;
+  font-size: clamp(26px, 5.5vw, 40px);
+  font-weight: 700;
+  color: var(--brand);
+  text-shadow: 0 0 20px rgba(232,52,42,0.4);
+  z-index: 1;
+}
+
+/* Front of card */
+.tile-front {
+  transform: rotateY(180deg);
+  background: #F5F0E8;
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: var(--shadow-card);
+}
+.tile-emoji {
+  font-size: clamp(34px, 9vw, 58px);
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.2));
+  line-height: 1;
+}
+
+.tile-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tile-name {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: #1A1A1A;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 2px 6px;
+  border-radius: 3px;
+  z-index: 2;
+  max-width: 90%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Hover */
+.tile:not(.flipped):not(.matched):hover .tile-inner {
+  transform: translateY(-5px) scale(1.03);
+}
+.tile:not(.flipped):not(.matched):hover .tile-back {
+  border-top-color: var(--gold);
+  box-shadow: 0 8px 0 rgba(0,0,0,0.5), 0 14px 30px rgba(232, 52, 42, 0.30);
+}
+
+/* ===========================
+   Tile Match — Merge + Big-Reveal Animation
+   =========================== */
+.tile.flying-out { pointer-events: none; z-index: 10; }
+.tile.flying-out .tile-inner { transition: none !important; }
+.tile.merge-secondary {
+  animation: tileMergeSecondary var(--match-anim-dur, 1000ms) linear forwards;
+}
+@keyframes tileMergeSecondary {
+  0%  { transform: translate(0, 0) scale(1); opacity: 1;
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+  22% { transform: translate(var(--slide-x), var(--slide-y)) scale(1);   opacity: 1; }
+  32% { transform: translate(var(--slide-x), var(--slide-y)) scale(0.5); opacity: 0; }
+  100%{ transform: translate(var(--slide-x), var(--slide-y)) scale(0.5); opacity: 0; }
+}
+
+.merge-clone {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 8px;
+  overflow: hidden;
+  transform-origin: center center;
+  background: #F5F0E8;
+  border: 2px solid var(--gold);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,179,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.merge-clone-active {
+  animation: mergeCloneReveal var(--clone-dur, 800ms) linear forwards;
+}
+@keyframes mergeCloneReveal {
+  0% {
+    transform: translate(0, 0) scale(1); opacity: 1;
+    animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  14% {
+    transform: translate(0, 0) scale(1.28); opacity: 1;
+    animation-timing-function: ease-out;
+  }
+  22% {
+    transform: translate(0, 0) scale(1.0); opacity: 1;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  55% {
+    transform: translate(var(--cx), var(--cy)) scale(2.8); opacity: 1;
+    animation-timing-function: linear;
+  }
+  75% {
+    transform: translate(var(--cx), var(--cy)) scale(2.8); opacity: 1;
+    animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  }
+  100% {
+    transform: translate(var(--cx), calc(var(--cy) - 360px)) scale(0.25); opacity: 0;
+  }
+}
+
+.game-board.locked .tile:not(.flipped):not(.matched) { pointer-events: none; }
+
+/* ===========================
+   SECTION: Win Modal
+   =========================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 20px;
+}
+.modal-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal {
+  background: var(--surface-1);
+  border: 1px solid var(--border-mid);
+  border-top: 3px solid var(--gold);
+  border-radius: 8px;
+  padding: 36px 28px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.8), 0 24px 64px rgba(0,0,0,0.7);
+  transform: scale(0.88) translateY(16px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-overlay.show .modal {
+  transform: scale(1) translateY(0);
+}
+.modal-trophy {
+  font-size: 56px;
+  margin-bottom: 10px;
+  display: inline-block;
+  animation: trophyBounce 1.4s ease-in-out infinite;
+}
+@keyframes trophyBounce {
+  0%, 100% { transform: translateY(0)    rotate(-4deg); }
+  50%       { transform: translateY(-10px) rotate(4deg); }
+}
+.modal h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+.modal h2 span { color: var(--brand); }
+.modal-subtitle {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 24px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.modal-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.modal-stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 14px 10px;
+}
+.modal-stat-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.modal-stat-value {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===========================
+   SECTION: Confetti
+   =========================== */
+.confetti-piece {
+  position: fixed;
+  width: 9px;
+  height: 13px;
+  top: -20px;
+  z-index: 200;
+  pointer-events: none;
+  animation: confettiFall linear forwards;
+  will-change: transform;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0.7; }
+}
+
+/* ===========================
+   SECTION: Responsive
+   =========================== */
+@media (max-width: 640px) {
+  .app       { padding: 12px 12px 24px; gap: 14px; }
+  .topbar    { padding: 10px 14px; gap: 10px; }
+  .brand-icon { width: 36px; height: 36px; }
+  .brand-text h1 { font-size: 20px; }
+  .brand-text p  { font-size: 10px; }
+  .stat      { padding: 6px 10px; min-width: 60px; }
+  .stat-label { font-size: 8px; letter-spacing: 1.5px; }
+  .stat-value { font-size: 18px; }
+  .btn       { padding: 8px 12px; font-size: 12px; }
+  .game-board { gap: 8px; }
+  .tile-back-icon { font-size: 22px; }
+  .tile-name { font-size: 8px; }
+  .modal     { padding: 26px 18px; }
+  .modal h2  { font-size: 28px; }
+  .modal-trophy { font-size: 44px; }
+}
+@media (max-width: 420px) {
+  .stats { width: 100%; justify-content: space-between; }
+  .stat  { flex: 1; min-width: 0; }
+  .brand-text p { display: none; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .blob { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Decorative background blobs -->
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="app">
+  <!-- ===== Top Bar ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Back card -->
+          <rect x="4" y="10" width="24" height="30" rx="4" fill="#1C1C1C" stroke="#E8342A" stroke-width="1.5" transform="rotate(-8 16 25)"/>
+          <text x="13" y="29" text-anchor="middle" font-size="13" font-weight="700" fill="#E8342A" font-family="Fredoka,sans-serif" transform="rotate(-8 16 25)">?</text>
+          <!-- Front card -->
+          <rect x="16" y="6" width="24" height="30" rx="4" fill="#F5F0E8" stroke="#FFB300" stroke-width="1.5" transform="rotate(6 28 21)"/>
+          <text x="29" y="25" text-anchor="middle" font-size="11" font-weight="700" fill="#E8342A" font-family="Fredoka,sans-serif" transform="rotate(6 28 21)">MM</text>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Meme<span>Match</span></h1>
+        <p>Flip · Match · Laugh</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-label">Level</span>
+        <span class="stat-value cyan" id="level-display">1</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Moves</span>
+        <span class="stat-value pink" id="moves">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Time</span>
+        <span class="stat-value" id="timer">00:00</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Pairs</span>
+        <span class="stat-value mint" id="pairs">0 / 8</span>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+      <button class="btn btn-peek" id="peek-btn" aria-label="Peek at tiles">
+        👀 Peek <span id="peek-count">(3)</span>
+      </button>
+      <button class="btn btn-primary" id="restart-btn" aria-label="Restart game">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Restart
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Game Board ===== -->
+  <div class="board-wrap">
+    <main class="game-board" id="board" aria-label="Memory game board"></main>
+  </div>
+</div>
+
+<!-- ===== Win / Level Modal ===== -->
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-trophy" id="modal-trophy">🏆</div>
+    <h2 id="modal-title">Level Complete!</h2>
+    <p class="modal-subtitle" id="modal-subtitle">Keep going!</p>
+    <div class="modal-stats">
+      <div class="modal-stat">
+        <div class="modal-stat-label">Moves</div>
+        <div class="modal-stat-value" id="final-moves">0</div>
+      </div>
+      <div class="modal-stat">
+        <div class="modal-stat-label">Time</div>
+        <div class="modal-stat-value" id="final-time">00:00</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-primary btn-lg" id="next-level-btn" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Next Level
+      </button>
+      <button class="btn btn-primary btn-lg" id="play-again-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Restart
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// SECTION 1: CONFIG / DATA
+// Single source of truth. Change GRID_SIZE to scale difficulty.
+// =====================================================================
+
+const FLIP_BACK_DELAY = 800;               // ms before unmatched tiles flip back
+const MAX_PEEKS = 3;
+
+// Each level: { cols, rows, pairs } — pairs = cols*rows/2
+const LEVELS = [
+  { cols: 4, pairs: 4  },  // Level 1 —  4 pairs
+  { cols: 4, pairs: 6  },  // Level 2 —  6 pairs
+  { cols: 4, pairs: 8  },  // Level 3 —  8 pairs
+  { cols: 5, pairs: 10 },  // Level 4 — 10 pairs
+  { cols: 6, pairs: 12 },  // Level 5 — 12 pairs
+  { cols: 7, pairs: 14 },  // Level 6 — 14 pairs
+  { cols: 8, pairs: 16 },  // Level 7 — 16 pairs
+  { cols: 6, pairs: 18 },  // Level 8 — 18 pairs (all 19 tiles use 18)
+];
+
+let currentLevel = 0; // 0-indexed
+
+const TILE_DEFS = [
+  { id: 't1', imageUrl: 'ye%20kya%20bak%20rahe%20ho.jpg', soundUrl: 'https://www.myinstants.com/media/sounds/cid-acp-mc.mp3',                                name: 'CID ACP',         emoji: '🕵️' },
+  { id: 't2', imageUrl: 'Rizz.jpg',           soundUrl: 'https://www.myinstants.com/media/sounds/rizz-sound-effect.mp3',                             name: 'Rizz',            emoji: '😏' },
+  { id: 't3', imageUrl: 'aayein.png',         soundUrl: 'https://www.myinstants.com/media/sounds/aayein-meme.mp3',                                   name: 'Aayein',          emoji: '😲' },
+  { id: 't4', imageUrl: 'HindustaniBhau.jpg', soundUrl: 'https://www.myinstants.com/media/sounds/tmp_z5b93np.mp3',                                   name: 'Hindustani Bhau', emoji: '🎙️' },
+  { id: 't5', imageUrl: 'amitabh.jpg',        soundUrl: 'https://www.myinstants.com/media/sounds/ma-ka-bhosda-aag.mp3',                              name: 'MKB AAG',         emoji: '🎤' },
+  { id: 't6', imageUrl: 'Salunke.webp',       soundUrl: 'https://www.myinstants.com/media/sounds/nahi-nahi-saluke-yaha-kuchh-to-gadbad-hai.mp3',    name: 'Salunke',         emoji: '🕵️' },
+  { id: 't7', videoUrl: 'kyu-re-mc-cid-kyu-re-mc.mp4', soundUrl: 'https://www.myinstants.com/media/sounds/kyu-re-madarchod-cid.mp3',               name: 'Kyu Re CID',      emoji: '🎬' },
+  { id: 't8', videoUrl: 'Ek Gand Pe.mp4',     soundUrl: 'https://www.myinstants.com/media/sounds/ek-gand-pe-repta-mara-n-sarak-pe-hagta-firega.mp3', name: 'Ek Gand Pe',     emoji: '🤣' },
+  { id: 't9', videoUrl: 'modi-ji-memes-modi-ji-bkl-meme.mp4', soundUrl: 'https://www.myinstants.com/media/sounds/modi-ji-bkl.mp3', name: 'Modi Ji BKL', emoji: '🎬' },
+  { id: 't10', videoUrl: 'America kya kehta tha.mp4',          soundUrl: 'https://www.myinstants.com/media/sounds/america-kya-kehta-tha.mp3',            name: 'America',             emoji: '🇺🇸' },
+  { id: 't11', videoUrl: 'hatt thari behen ki.mp4',           soundUrl: 'https://www.myinstants.com/media/sounds/hatt-thari-behen-ki.mp3',             name: 'Hatt Thari Behen Ki', emoji: '😤' },
+  { id: 't12', videoUrl: 'Aisa mat karo.mp4',                 soundUrl: 'https://www.myinstants.com/media/sounds/aisa-mat-karo.mp3',                   name: 'Aisa Mat Karo',       emoji: '🙅' },
+  { id: 't13', videoUrl: 'bkchodi mt kar cid.mp4',            soundUrl: 'https://www.myinstants.com/media/sounds/bkchodi-mt-kar-cid.mp3',              name: 'Bkchodi Mt Kar CID',  emoji: '🕵️' },
+  { id: 't14', videoUrl: 'Chalti Firti Cocaine.mp4',          soundUrl: 'https://www.myinstants.com/media/sounds/chalti-firti-cocaine.mp3',            name: 'Chalti Firti Cocaine',emoji: '🤪' },
+  { id: 't15', videoUrl: 'Modi ji wah.mp4',                   soundUrl: 'https://www.myinstants.com/media/sounds/modi-ji-wah.mp3',                     name: 'Modi Ji Wah',         emoji: '🙌' },
+  { id: 't16', videoUrl: 'Cid ke bakchodi.mp4',               soundUrl: 'https://www.myinstants.com/media/sounds/cid-ke-bakchodi.mp3',                 name: 'CID Ke Bakchodi',     emoji: '🕵️' },
+  { id: 't17', imageUrl: 'Teri maa ka bosda fat jaga.jpg',    soundUrl: 'https://www.myinstants.com/media/sounds/teri-maa-ka-bosda-fat-jaga.mp3',      name: 'Teri Maa Ka...',      emoji: '💥' },
+  { id: 't18', videoUrl: 'Meow ghop ghop ghop.mp4',           soundUrl: 'https://www.myinstants.com/media/sounds/meow-ghop-ghop-ghop.mp3',             name: 'Meow Ghop Ghop',      emoji: '🐱' },
+  { id: 't19', videoUrl: '7 crore KBC.mp4',                   soundUrl: 'https://www.myinstants.com/media/sounds/7-crore-kbc.mp3',                     name: '7 Crore KBC',         emoji: '💰' },
+];
+
+// Returns tile defs for the current level.
+function getActiveDefs() {
+  return TILE_DEFS.slice(0, LEVELS[currentLevel].pairs);
+}
+
+// =====================================================================
+// SECTION 1b: AUDIO DURATION CACHE
+// Pre-fetch clip durations so animation can be timed to audio length.
+// =====================================================================
+
+const ANIM_FLOOR   = 1800;  // ms — never rush the animation below this
+const ANIM_CEILING = 3200;  // ms — never stretch beyond this even for long clips
+const ANIM_DEFAULT = 2000;  // ms — fallback when duration can't be determined
+
+// soundUrl -> duration in ms (null = still loading, number = resolved)
+const audioDurationCache = {};
+
+function preloadAudioDurations() {
+  getActiveDefs().forEach(def => {
+    if (!def.soundUrl || def.soundUrl in audioDurationCache) return;
+    audioDurationCache[def.soundUrl] = null; // mark pending
+    const a = new Audio(def.soundUrl);
+    a.preload = 'metadata';
+    a.addEventListener('loadedmetadata', () => {
+      const ms = isFinite(a.duration) ? Math.round(a.duration * 1000) : ANIM_DEFAULT;
+      audioDurationCache[def.soundUrl] = Math.min(ANIM_CEILING, Math.max(ANIM_FLOOR, ms));
+      console.log(`[MemeMatch] ✅ Duration cached for "${def.name}": ${audioDurationCache[def.soundUrl]}ms`);
+    }, { once: true });
+    a.addEventListener('error', () => {
+      audioDurationCache[def.soundUrl] = ANIM_DEFAULT;
+      console.warn(`[MemeMatch] ⚠️ Metadata failed for "${def.name}", using default ${ANIM_DEFAULT}ms`);
+    }, { once: true });
+  });
+}
+
+function getAnimDuration(tile) {
+  const url = tile.def.soundUrl;
+  if (!url) return ANIM_DEFAULT; // beep tiles use default
+  const cached = audioDurationCache[url];
+  if (cached === null || cached === undefined) {
+    console.warn(`[MemeMatch] ⚠️ Duration not ready for "${tile.def.name}", using default`);
+    return ANIM_DEFAULT;
+  }
+  return cached;
+}
+
+// =====================================================================
+// SECTION 2: GAME STATE
+// =====================================================================
+
+const state = {
+  tiles: [],
+  firstTile: null,
+  secondTile: null,
+  moves: 0,
+  matchedPairs: 0,
+  totalPairs: getActiveDefs().length,
+  startTime: null,
+  timerInterval: null,
+  elapsedMs: 0,
+  isLocked: false,
+  isWon: false,
+  generation: 0,
+  peeksLeft: MAX_PEEKS,
+};
+
+// =====================================================================
+// SECTION 3: AUDIO
+// =====================================================================
+
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+
+// Track the currently playing meme audio so we can fade it out on next interaction
+let currentAudio = null;
+
+const FADE_OUT_MS = 800;
+function fadeOutCurrent() {
+  if (!currentAudio) return;
+  const audio = currentAudio;
+  currentAudio = null;
+  const startVol = audio.volume;
+  const steps = 30;
+  const stepMs = FADE_OUT_MS / steps;
+  let step = 0;
+  const id = setInterval(() => {
+    step++;
+    audio.volume = Math.max(0, startVol * (1 - step / steps));
+    if (step >= steps) {
+      clearInterval(id);
+      audio.pause();
+    }
+  }, stepMs);
+}
+
+function playMatchSound(tile) {
+  fadeOutCurrent();
+  const url = tile.def.soundUrl;
+  const name = tile.def.name;
+  if (url) {
+    try {
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.onerror = () => console.warn(`[MemeMatch] ❌ Audio failed to load for "${name}": ${url}`);
+      const p = audio.play();
+      if (p) p.catch(e => console.warn(`[MemeMatch] ❌ play() rejected for "${name}":`, e));
+    } catch (e) {
+      console.warn(`[MemeMatch] ❌ Audio exception for "${name}":`, e);
+    }
+  } else {
+    // Fallback: Web Audio API beep
+    try {
+      const ctx = getAudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      const notes = [659.25, 880.0];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const start = now + i * 0.08;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.22, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.32);
+      });
+    } catch (e) {
+      console.warn(`[MemeMatch] ❌ Web Audio beep failed:`, e);
+    }
+  }
+}
+
+const MISMATCH_SOUNDS = [
+  'https://www.myinstants.com/media/sounds/faaah.mp3',
+  'https://www.myinstants.com/media/sounds/ack.mp3',
+  'https://www.myinstants.com/media/sounds/mac-quack.mp3',
+  'https://www.myinstants.com/media/sounds/spongebob-fail.mp3',
+];
+
+function playMismatchSound() {
+  fadeOutCurrent();
+  const url = MISMATCH_SOUNDS[Math.floor(Math.random() * MISMATCH_SOUNDS.length)];
+  try {
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.play().catch(e => console.warn('Mismatch audio failed:', e));
+  } catch (e) {
+    console.warn('Mismatch audio failed:', e);
+  }
+}
+
+function playWinSound() {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = now + i * 0.1;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.6);
+    });
+  } catch (e) { /* silent */ }
+}
+
+// =====================================================================
+// SECTION 4: RENDERING
+// =====================================================================
+
+const boardEl = document.getElementById('board');
+const movesEl = document.getElementById('moves');
+const pairsEl = document.getElementById('pairs');
+const timerEl = document.getElementById('timer');
+const progressFillEl = document.getElementById('progress-fill');
+const modalEl = document.getElementById('modal');
+
+function buildDeck() {
+  const defs = getActiveDefs();
+  const pairs = [...defs, ...defs];
+  return pairs.map((def, idx) => ({
+    uuid: `tile-${idx}-${Math.random().toString(36).slice(2, 8)}`,
+    def,
+    flipped: false,
+    matched: false,
+  }));
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderBoard() {
+  boardEl.style.gridTemplateColumns = `repeat(${LEVELS[currentLevel].cols}, 1fr)`;
+  boardEl.innerHTML = '';
+  state.tiles.forEach((tile, idx) => {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.dataset.uuid = tile.uuid;
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', 'Mystery tile. Click to flip.');
+    el.style.animationDelay = (idx * 0.03) + 's';
+
+    // Determine visual: video > image > emoji
+    let frontContent;
+    if (tile.def.videoUrl) {
+      frontContent = `<video src="${encodeURIComponent(tile.def.videoUrl)}" class="tile-image" autoplay loop muted playsinline></video>`;
+    } else if (tile.def.imageUrl) {
+      frontContent = `<img src="${tile.def.imageUrl}" class="tile-image" alt="${tile.def.name}">`;
+    } else {
+      frontContent = `<span class="tile-emoji">${tile.def.emoji}</span>`;
+    }
+
+    el.innerHTML = `
+      <div class="tile-inner">
+        <div class="tile-face tile-back">
+          <span class="tile-back-icon">?</span>
+        </div>
+        <div class="tile-face tile-front">
+          ${frontContent}
+          <span class="tile-name">${tile.def.name}</span>
+        </div>
+      </div>
+    `;
+
+    el.addEventListener('click', () => handleTileClick(tile));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleTileClick(tile);
+      }
+    });
+
+    boardEl.appendChild(el);
+  });
+}
+
+function updateTileEl(tile) {
+  const el = boardEl.querySelector(`[data-uuid="${tile.uuid}"]`);
+  if (!el) return;
+  el.classList.toggle('flipped', tile.flipped);
+  el.classList.toggle('matched', tile.matched);
+  el.setAttribute('aria-label', tile.matched
+    ? `${tile.def.name} — matched`
+    : tile.flipped
+      ? `${tile.def.name} — revealed`
+      : 'Mystery tile. Click to flip.');
+}
+
+function updateHUD() {
+  movesEl.textContent = state.moves;
+  pairsEl.textContent = `${state.matchedPairs} / ${state.totalPairs}`;
+  timerEl.textContent = formatTime(state.elapsedMs);
+  const pct = state.totalPairs > 0 ? (state.matchedPairs / state.totalPairs) * 100 : 0;
+  progressFillEl.style.width = pct + '%';
+  document.getElementById('level-display').textContent = currentLevel + 1;
+}
+
+function formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+  const s = String(totalSec % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+// =====================================================================
+// SECTION 5: EVENT HANDLERS
+// =====================================================================
+
+function handleTileClick(tile) {
+  if (state.isLocked || state.isWon) return;
+  if (tile.flipped || tile.matched) return;
+  if (state.firstTile && state.secondTile) return;
+
+  fadeOutCurrent();
+
+  if (!state.startTime) startTimer();
+
+  tile.flipped = true;
+  updateTileEl(tile);
+
+  if (!state.firstTile) {
+    state.firstTile = tile;
+    return;
+  }
+
+  state.secondTile = tile;
+  state.moves += 1;
+  updateHUD();
+
+  state.isLocked = true;
+  boardEl.classList.add('locked');
+
+  const gen = state.generation;
+  const t1 = state.firstTile;
+  const t2 = state.secondTile;
+
+  if (t1.def.id === t2.def.id) {
+    // ── MATCH ──────────────────────────────────────────────────────
+    // 1. Sound fires instantly, no delay
+    playMatchSound(t1);
+
+    // 2. Stats update instantly, independent of animation
+    t1.matched = true;
+    t2.matched = true;
+    state.matchedPairs += 1;
+    updateHUD();
+
+    // 3. Unlock board immediately so player can keep clicking
+    state.firstTile = null;
+    state.secondTile = null;
+    state.isLocked = false;
+    boardEl.classList.remove('locked');
+
+    // 4. Check win before animation so we can pass callback
+    const isFinalPair = state.matchedPairs === state.totalPairs;
+
+    // 5. Trigger fly-out animation; on final pair, show modal when animation ends
+    triggerMatchMerge(t1, t2, gen, isFinalPair ? showWinModal : null);
+
+    if (isFinalPair) {
+      state.isWon = true;
+      stopTimer();
+      playWinSound();
+      launchConfetti();
+    }
+  } else {
+    // ── MISMATCH ───────────────────────────────────────────────────
+    playMismatchSound();
+    setTimeout(() => {
+      if (gen !== state.generation) return;
+      t1.flipped = false;
+      t2.flipped = false;
+      updateTileEl(t1);
+      updateTileEl(t2);
+      state.firstTile = null;
+      state.secondTile = null;
+      state.isLocked = false;
+      boardEl.classList.remove('locked');
+    }, FLIP_BACK_DELAY);
+  }
+}
+
+// =====================================================================
+// SECTION 5b: MATCH FLY-OUT
+// Triggers the continuous spin→pop→fly animation on matched tiles.
+// Stats and sound are already done before this is called.
+// =====================================================================
+
+function triggerMatchMerge(t1, t2, gen, onComplete) {
+  const dur = getAnimDuration(t1);
+
+  const el1 = boardEl.querySelector(`[data-uuid="${t1.uuid}"]`);
+  const el2 = boardEl.querySelector(`[data-uuid="${t2.uuid}"]`);
+  if (!el1 || !el2) return;
+
+  const r1 = el1.getBoundingClientRect();
+  const r2 = el2.getBoundingClientRect();
+  const tileW = r1.width;
+  const tileH = r1.height;
+
+  // Midpoint between the two tiles (viewport coords)
+  const mx = (r1.left + r1.right  + r2.left + r2.right)  / 4;
+  const my = (r1.top  + r1.bottom + r2.top  + r2.bottom) / 4;
+
+  // True viewport center
+  const vcx = window.innerWidth  / 2;
+  const vcy = window.innerHeight / 2;
+
+  const slideDelay = Math.round(dur * 0.22); // 22% — slide phase length
+  const cloneDur   = dur - slideDelay;
+
+  // ── Slide both tiles visibly to midpoint, then hand off to clone ───
+  [{ el: el1, r: r1 }, { el: el2, r: r2 }].forEach(({ el, r }) => {
+    const dx = mx - (r.left + r.right)  / 2;
+    const dy = my - (r.top  + r.bottom) / 2;
+    el.style.setProperty('--slide-x', `${dx}px`);
+    el.style.setProperty('--slide-y', `${dy}px`);
+    el.style.setProperty('--match-anim-dur', `${dur}ms`);
+    el.classList.add('flying-out', 'merge-secondary');
+    // Tiles go invisible when clone appears (no duplicate frames)
+    el.addEventListener('animationend', () => {
+      if (gen !== state.generation) return;
+      el.style.visibility = 'hidden';
+    }, { once: true });
+  });
+
+  // ── Fixed-position clone: appears at midpoint when slide completes ──
+  const frontEl   = el1.querySelector('.tile-front');
+  const clone     = document.createElement('div');
+  clone.className = 'merge-clone';
+  clone.style.left   = `${mx - tileW / 2}px`;
+  clone.style.top    = `${my - tileH / 2}px`;
+  clone.style.width  = `${tileW}px`;
+  clone.style.height = `${tileH}px`;
+  // Delta: midpoint → viewport center
+  clone.style.setProperty('--cx', `${vcx - mx}px`);
+  clone.style.setProperty('--cy', `${vcy - my}px`);
+
+  // Copy tile face content into the clone
+  const tileMedia = frontEl.querySelector('.tile-image');
+  const tileEmoji = frontEl.querySelector('.tile-emoji');
+  const tileName  = frontEl.querySelector('.tile-name');
+  if (tileMedia) {
+    if (tileMedia.tagName === 'VIDEO') {
+      const vid = document.createElement('video');
+      vid.src = tileMedia.src;
+      vid.className = 'tile-image';
+      vid.autoplay = true;
+      vid.loop = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      clone.appendChild(vid);
+    } else {
+      const img = document.createElement('img');
+      img.src = tileMedia.src;
+      img.className = 'tile-image';
+      clone.appendChild(img);
+    }
+  } else if (tileEmoji) {
+    const span = document.createElement('span');
+    span.className = 'tile-emoji';
+    span.textContent = tileEmoji.textContent;
+    clone.appendChild(span);
+  }
+  if (tileName) clone.appendChild(tileName.cloneNode(true));
+
+  // Clone starts invisible — only one source of truth is visible at a time
+  clone.style.visibility = 'hidden';
+  document.body.appendChild(clone);
+
+  // At slide completion: hide grid tiles, reveal clone, start its animation
+  setTimeout(() => {
+    if (gen !== state.generation) { clone.remove(); return; }
+    el1.style.visibility = 'hidden'; // grid tiles hand off
+    el2.style.visibility = 'hidden';
+    clone.style.visibility = '';     // clone takes over as sole visible element
+    clone.style.setProperty('--clone-dur', `${cloneDur}ms`);
+    clone.classList.add('merge-clone-active');
+    clone.addEventListener('animationend', () => { clone.remove(); if (onComplete) onComplete(); }, { once: true });
+  }, slideDelay);
+}
+
+// =====================================================================
+// SECTION 6: TIMER
+// =====================================================================
+
+function startTimer() {
+  state.startTime = Date.now() - state.elapsedMs;
+  state.timerInterval = setInterval(() => {
+    state.elapsedMs = Date.now() - state.startTime;
+    updateHUD();
+  }, 250);
+}
+
+function stopTimer() {
+  if (state.timerInterval) {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+}
+
+// =====================================================================
+// SECTION 7: WIN CONDITION & RESET
+// =====================================================================
+
+function checkWin() {
+  // Final pair is handled directly in the match branch with animation callback.
+}
+
+function showWinModal() {
+  const isLastLevel = currentLevel >= LEVELS.length - 1;
+  document.getElementById('modal-trophy').textContent = isLastLevel ? '🏆' : '⭐';
+  document.getElementById('modal-title').textContent = isLastLevel ? 'You Win!' : `Level ${currentLevel + 1} Complete!`;
+  document.getElementById('modal-subtitle').textContent = isLastLevel
+    ? 'All memes matched. Legendary memory!'
+    : `Get ready for Level ${currentLevel + 2} — more memes, bigger grid!`;
+  document.getElementById('final-moves').textContent = state.moves;
+  document.getElementById('final-time').textContent = formatTime(state.elapsedMs);
+  document.getElementById('next-level-btn').style.display = isLastLevel ? 'none' : '';
+  modalEl.classList.add('show');
+}
+
+function hideWinModal() {
+  modalEl.classList.remove('show');
+}
+
+function resetGame(advanceLevel = false) {
+  if (advanceLevel && currentLevel < LEVELS.length - 1) {
+    currentLevel++;
+  }
+  state.generation += 1;
+  stopTimer();
+  state.tiles = shuffle(buildDeck());
+  state.firstTile = null;
+  state.secondTile = null;
+  state.moves = 0;
+  state.matchedPairs = 0;
+  state.totalPairs = getActiveDefs().length;
+  state.elapsedMs = 0;
+  state.startTime = null;
+  state.isLocked = false;
+  state.isWon = false;
+  state.peeksLeft = MAX_PEEKS;
+  boardEl.classList.remove('locked');
+  renderBoard();
+  updateHUD();
+  updatePeekBtn();
+  hideWinModal();
+  clearConfetti();
+  document.querySelectorAll('.merge-clone').forEach(c => c.remove());
+  preloadAudioDurations();
+  setTimeout(peekAllTiles, 300);
+}
+
+// =====================================================================
+// SECTION 8: CONFETTI
+// =====================================================================
+
+const CONFETTI_COLORS = ['#E8342A', '#FFB300', '#F5F0E8', '#B02820', '#FFD166', '#ffffff'];
+const CONFETTI_COUNT = 90;
+
+function launchConfetti() {
+  for (let i = 0; i < CONFETTI_COUNT; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const size = 6 + Math.random() * 10;
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.width = size + 'px';
+    piece.style.height = (size * 1.4) + 'px';
+    piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    piece.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+    piece.style.animationDelay = Math.random() * 0.6 + 's';
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    if (Math.random() > 0.5) piece.style.borderRadius = '50%';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 5500);
+  }
+}
+
+function clearConfetti() {
+  document.querySelectorAll('.confetti-piece').forEach(p => p.remove());
+}
+
+// =====================================================================
+// SECTION 9: INIT / WIRE-UP
+// =====================================================================
+
+document.getElementById('restart-btn').addEventListener('click', () => { currentLevel = 0; resetGame(); });
+document.getElementById('play-again-btn').addEventListener('click', () => { currentLevel = 0; resetGame(); });
+document.getElementById('next-level-btn').addEventListener('click', () => resetGame(true));
+
+// =====================================================================
+// SECTION 10: PEEK PREVIEW
+// Briefly reveal all tiles at game start, then flip them back.
+// =====================================================================
+
+// 3 progressively weaker peek configs (use 1 = longest, use 3 = barely a flash)
+const PEEK_USES = [
+  { revealMs: 1200, staggerMs: 45 },  // use 1 — generous
+  { revealMs: 550,  staggerMs: 25 },  // use 2 — moderate
+  { revealMs: 320,  staggerMs: 16 },  // use 3 — short but catchable
+];
+const peekBtn = document.getElementById('peek-btn');
+const peekCountEl = document.getElementById('peek-count');
+
+function updatePeekBtn() {
+  const left = state.peeksLeft;
+  peekCountEl.textContent = left > 0 ? `(${left})` : '';
+  peekBtn.disabled = left <= 0 || state.isLocked || state.isWon;
+}
+
+peekBtn.addEventListener('click', () => {
+  if (state.peeksLeft <= 0 || state.isLocked || state.isWon) return;
+  const useIndex = MAX_PEEKS - state.peeksLeft;       // 0, 1, or 2
+  state.peeksLeft--;
+  updatePeekBtn();
+  peekUnmatchedTiles(PEEK_USES[useIndex]);
+});
+
+function peekUnmatchedTiles({ revealMs, staggerMs }) {
+  state.isLocked = true;
+  boardEl.classList.add('locked');
+  updatePeekBtn();
+
+  // Only unmatched, unflipped tiles
+  const tileEls = [...boardEl.querySelectorAll('.tile:not(.matched)')];
+
+  tileEls.forEach((el, i) => {
+    setTimeout(() => el.classList.add('flipped'), i * staggerMs);
+  });
+
+  const totalRevealTime = tileEls.length * staggerMs + revealMs;
+
+  setTimeout(() => {
+    tileEls.forEach((el, i) => {
+      setTimeout(() => el.classList.remove('flipped'), i * staggerMs);
+    });
+    setTimeout(() => {
+      state.isLocked = false;
+      boardEl.classList.remove('locked');
+      updatePeekBtn();
+    }, tileEls.length * staggerMs + 400);
+  }, totalRevealTime);
+}
+
+function peekAllTiles() {
+  // Initial game-start peek — uses fixed timing, does NOT consume a peek use
+  const { revealMs, staggerMs } = { revealMs: 250, staggerMs: 20 };
+  state.isLocked = true;
+  boardEl.classList.add('locked');
+
+  const tileEls = [...boardEl.querySelectorAll('.tile')];
+  tileEls.forEach((el, i) => {
+    setTimeout(() => el.classList.add('flipped'), i * staggerMs);
+  });
+
+  const totalRevealTime = tileEls.length * staggerMs + revealMs;
+  setTimeout(() => {
+    tileEls.forEach((el, i) => {
+      setTimeout(() => el.classList.remove('flipped'), i * staggerMs);
+    });
+    setTimeout(() => {
+      state.isLocked = false;
+      boardEl.classList.remove('locked');
+      updatePeekBtn();
+    }, tileEls.length * staggerMs + 500);
+  }, totalRevealTime);
+}
+
+// Pre-fetch audio durations so animation timing is ready before first match
+preloadAudioDurations();
+
+// Boot the game
+resetGame();
+</script>
+</body>
+</html>
