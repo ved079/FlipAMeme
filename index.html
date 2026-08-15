@@ -994,7 +994,6 @@ const WIN_SOUNDS = [
 ];
 
 function playWinSound() {
-  fadeOutCurrent();
   const url = WIN_SOUNDS[Math.floor(Math.random() * WIN_SOUNDS.length)];
   const audio = new Audio(url);
   audio.volume = 1;
@@ -1200,8 +1199,8 @@ function handleTileClick(tile) {
     if (isFinalPair) {
       state.isWon = true;
       stopTimer();
-      playWinSound();
       launchConfetti();
+      setTimeout(playWinSound, 1200);
     }
   } else {
     // ── MISMATCH ───────────────────────────────────────────────────
